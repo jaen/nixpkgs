@@ -50,9 +50,13 @@ in rec {
     ) attrs.platforms
   );
 
+  # The gem should be included if either of those is true:
+  #   a) no group requirement is specified,
+  #   b) the gem has no groups specified,
+  #   c) all of the gems group are specified as required (modulo
   groupMatches = groups: attrs:
     groups == null || !(attrs ? groups) ||
-      (intersectLists (groups ++ [ "default" ]) attrs.groups) != [];
+      (intersectLists (groups ++ [ "default" ]) attrs.groups) == attrs.groups;
 
   applyGemConfigs = attrs:
     (if gemConfig ? ${attrs.gemName}
