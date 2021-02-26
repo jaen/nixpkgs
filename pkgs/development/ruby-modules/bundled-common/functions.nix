@@ -9,10 +9,19 @@ in rec {
     gemfile ? null
   , lockfile ? null
   , gemset ? null
+  , gemspec ? null
   , gemdir ? null
   , ...
-  }: {
+  }: 
+  let
+    fileNames = builtins.attrNames(builtins.readDir(gemdir));
+    defaultGemspec = lib.findFirst (path: lib.hasSuffix ".gemspec" path) null fileNames;
+  in {
     inherit gemdir;
+
+    gemspec =
+    if gemspec == null && defaultGemspec != null then "${gemdir}/${defaultGemspec}"
+    else gemspec;
 
     gemfile =
     if gemfile == null then assert gemdir != null; gemdir + "/Gemfile"

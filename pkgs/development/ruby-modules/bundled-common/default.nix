@@ -12,6 +12,7 @@
 , gemfile ? null
 , lockfile ? null
 , gemset ? null
+, gemspec ? null
 , ruby ? defs.ruby
 , copyGemFiles ? false # Copy gem files instead of symlinking
 , gemConfig ? defaultGemConfig
@@ -75,15 +76,21 @@ let
   in
     copyIfBundledByPath mainGem;
 
+  # Gemspecs usually depend on lib or more
+  gemspecConfFile = ''
+    cp -R ${gemdir}/lib $out/lib
+    cp ${gemFiles.gemspec} $out/
+  '';
+
   # We have to normalize the Gemfile.lock, otherwise bundler tries to be
   # helpful by doing so at run time, causing executables to immediately bail
   # out. Yes, I'm serious.
-  confFiles = runCommand "gemfile-and-lockfile" {} ''
+  confFiles = runCommand "gemfile-and-lockfile" {} (''
     mkdir -p $out
     ${maybeCopyAll mainGemName}
     cp ${gemFiles.gemfile} $out/Gemfile || ls -l $out/Gemfile
     cp ${gemFiles.lockfile} $out/Gemfile.lock || ls -l $out/Gemfile.lock
-  '';
+  '' + lib.optionalString (gemFiles.gemspec != null && gemdir != null) gemspecConfFile);
 
   buildGem = name: attrs: (
     let
